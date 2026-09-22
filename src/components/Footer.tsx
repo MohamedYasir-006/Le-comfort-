@@ -51,7 +51,7 @@ export default function Footer() {
       </div>
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-6xl flex-col justify-between gap-2 px-5 py-5 text-xs text-neutral-500 sm:flex-row">
-          <span>© {new Date().getFullYear()} {SITE.name}, Nagore. All rights reserved.</span>
+          <span suppressHydrationWarning>© {new Date().getFullYear()} {SITE.name}, Nagore. All rights reserved.</span>
           <span>Check-in {SITE.checkInTime} · Check-out {SITE.checkOutTime}</span>
         </div>
       </div>

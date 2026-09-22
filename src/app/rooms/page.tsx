@@ -51,7 +51,9 @@ export default async function RoomsPage({
           </p>
         )}
         <div className="grid gap-12 py-12 md:grid-cols-3">
-          {filtered.map((r) => <RoomCard key={r.id} room={r} checkin={sp.checkin} checkout={sp.checkout} />)}
+          {/* Deluxe cover is the measured LCP on this page (first row sits above the fold on desktop);
+              slug-based so it survives guest-count filtering. All other cards stay lazy. */}
+          {filtered.map((r) => <RoomCard key={r.id} room={r} checkin={sp.checkin} checkout={sp.checkout} preload={r.slug === "deluxe-room"} />)}
         </div>
         {filtered.length === 0 && (
           <p className="pb-16 text-center text-neutral-600">

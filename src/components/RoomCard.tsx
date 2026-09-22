@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { inr, type RoomDTO } from "@/lib/data";
 
-export default function RoomCard({ room, checkin, checkout }: { room: RoomDTO; checkin?: string; checkout?: string }) {
+export default function RoomCard({ room, checkin, checkout, preload = false }: { room: RoomDTO; checkin?: string; checkout?: string; preload?: boolean }) {
   const q = checkin && checkout ? `?checkin=${checkin}&checkout=${checkout}` : "";
   return (
     <Link href={`/rooms/${room.slug}${q}`} className="group block">
@@ -11,7 +11,8 @@ export default function RoomCard({ room, checkin, checkout }: { room: RoomDTO; c
           src={room.photos[0]?.url ?? ""}
           alt={room.photos[0]?.altText ?? room.name}
           fill
-          loading="lazy"
+          // preload and loading="lazy" are mutually exclusive (Next throws if both are set)
+          {...(preload ? { preload: true } : { loading: "lazy" as const })}
           sizes="(max-width: 768px) 100vw, 33vw"
           className="object-cover transition-transform duration-700 group-hover:scale-105"
         />

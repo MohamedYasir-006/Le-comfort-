@@ -1,11 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function AvailabilitySearch({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
-  const today = new Date().toISOString().slice(0, 10);
+  // Computed after mount so server/prerendered HTML and the first client
+  // render agree (a stale baked-in date caused hydration mismatches).
+  const [today, setToday] = useState("");
+  useEffect(() => {
+    setToday(new Date().toISOString().slice(0, 10));
+  }, []);
   const [checkin, setCheckin] = useState("");
   const [checkout, setCheckout] = useState("");
   const [guests, setGuests] = useState("2");
@@ -25,12 +30,14 @@ export default function AvailabilitySearch({ compact = false }: { compact?: bool
     >
       <label className="block">
         <span className="text-[11px] tracking-[0.2em] text-neutral-500 uppercase">Check-in</span>
-        <input type="date" required min={today} value={checkin} onChange={(e) => setCheckin(e.target.value)}
+        <input type="date" required min={today || undefined} value={checkin} onChange={(e) => setCheckin(e.target.value)}
+          suppressHydrationWarning
           className="mt-1 w-full border border-neutral-300 px-3 py-2.5 text-[15px] outline-none focus:border-black" />
       </label>
       <label className="block">
         <span className="text-[11px] tracking-[0.2em] text-neutral-500 uppercase">Check-out</span>
-        <input type="date" required min={checkin || today} value={checkout} onChange={(e) => setCheckout(e.target.value)}
+        <input type="date" required min={checkin || today || undefined} value={checkout} onChange={(e) => setCheckout(e.target.value)}
+          suppressHydrationWarning
           className="mt-1 w-full border border-neutral-300 px-3 py-2.5 text-[15px] outline-none focus:border-black" />
       </label>
       <label className="block">
