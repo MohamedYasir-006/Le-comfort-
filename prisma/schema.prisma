@@ -1,0 +1,134 @@
+// Le Comfort — Prisma schema (v1, request-to-book, NO payment gateway)
+//
+// Local dev default: SQLite file (zero external deps).
+// To switch to Supabase Postgres for production:
+//   1. Change provider to "postgresql"
+//   2. Set DATABASE_URL to your Supabase pooled connection string
+//   3. Run `npx prisma migrate deploy`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  cancelled
+  completed
+}
+
+enum BookingSource {
+  direct
+  phone
+  walk_in
+}
+
+enum PhotoCategory {
+  room
+  parking
+  exterior
+  amenity
+  gallery
+}
+
+model Room {
+  id                   String         @id @default(cuid())
+  name                 String
+  slug                 String         @unique
+  description          String
+  maxGuests            Int            @default(2)
+  bedConfig            String         @default("1 Queen Bed")
+  sizeSqft             Int?
+  basePricePerNight    Int // INR per night
+  weekendPricePerNight Int?
+  amenities            String         @default("[]") // JSON string[] (sqlite has no native array)
+  floorPlanUrl         String?
+  isActive             Boolean        @default(true)
+  sortOrder            Int            @default(0)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  photos               Photo[]
+  seasonalRates        SeasonalRate[]
+  bookings             Booking[]
+  blockedDates         BlockedDate[]
+  reviews              Review[]
+}
+
+model Photo {
+  id        String        @id @default(cuid())
+  roomId    String?
+  room      Room?         @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  url       String
+  altText   String        @default("")
+  sortOrder Int           @default(0)
+  category  PhotoCategory @default(room)
+  createdAt DateTime      @default(now())
+}
+
+model SeasonalRate {
+  id            String   @id @default(cuid())
+  roomId        String
+  room          Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  startDate     DateTime
+  endDate       DateTime
+  pricePerNight Int
+  minStayNights Int?
+
+  @@index([roomId, startDate, endDate])
+}
+
+model Booking {
+  id           String        @id @default(cuid())
+  manageToken  String        @unique @default(cuid())
+  roomId       String
+  room         Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  guestName    String
+  guestEmail   String
+  guestPhone   String
+  guestCount   Int           @default(2)
+  checkIn      DateTime
+  checkOut     DateTime
+  status       BookingStatus @default(pending)
+  totalAmount  Int // INR, computed server-side
+  notes        String?
+  source       BookingSource @default(direct)
+  createdAt    DateTime      @default(now())
+  confirmedAt  DateTime?
+  cancelledAt  DateTime?
+
+  @@index([roomId, checkIn, checkOut, status])
+  @@index([status, checkIn])
+}
+
+model BlockedDate {
+  id     String   @id @default(cuid())
+  roomId String
+  room   Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  date   DateTime // stored as UTC midnight; display in Asia/Kolkata
+  reason String   @default("manually blocked")
+
+  @@unique([roomId, date])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  guestName  String
+  rating     Int // 1-5
+  comment    String
+  roomId     String?
+  room       Room?    @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  isApproved Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
